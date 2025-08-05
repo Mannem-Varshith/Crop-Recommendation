@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Streamlit App Launcher for Crop Recommendation System
-
-This script launches the Streamlit web application.
+Local launcher for the Crop Recommendation System
+This script launches the Streamlit app on localhost
 """
 
 import subprocess
@@ -10,9 +9,9 @@ import sys
 import os
 
 def main():
-    """Launch the Streamlit app"""
+    """Launch the Streamlit app locally"""
     print("🌾 Starting Crop Recommendation System...")
-    print("📱 Opening web interface...")
+    print("📱 Opening web interface on localhost...")
     
     # Check if streamlit is installed
     try:
@@ -25,6 +24,11 @@ def main():
     
     # Launch the app
     try:
+        print("🚀 Starting Streamlit server...")
+        print("📋 App will open at: http://localhost:8501")
+        print("⏹️  Press Ctrl+C to stop the server")
+        print("-" * 50)
+        
         subprocess.run([
             sys.executable, "-m", "streamlit", "run", "streamlit_app.py",
             "--server.port", "8501",

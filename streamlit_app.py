@@ -5,6 +5,7 @@ import pickle
 from crop_recommendation_model import CropRecommendationModel
 import plotly.express as px
 import plotly.graph_objects as go
+import os
 
 # Page configuration
 st.set_page_config(
@@ -48,13 +49,21 @@ st.markdown("""
 
 @st.cache_resource
 def load_model():
-    """Load the trained model"""
+    """Load the trained model with error handling"""
     try:
+        # Check if model file exists
+        model_path = 'crop_recommendation_model.pkl'
+        if not os.path.exists(model_path):
+            st.error(f"Model file not found: {model_path}")
+            return None
+        
         model = CropRecommendationModel()
-        model.load_model('crop_recommendation_model.pkl')
+        model.load_model(model_path)
+        st.success("✅ Model loaded successfully!")
         return model
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"❌ Error loading model: {str(e)}")
+        st.info("Please ensure the model file exists and is not corrupted.")
         return None
 
 def main():
@@ -62,11 +71,13 @@ def main():
     st.markdown('<h1 class="main-header">🌾 Crop Recommendation System</h1>', unsafe_allow_html=True)
     st.markdown("---")
     
-    # Load model
-    model = load_model()
+    # Load model with progress indicator
+    with st.spinner("Loading crop recommendation model..."):
+        model = load_model()
+    
     if model is None:
-        st.error("Failed to load the model. Please ensure the model file exists.")
-        return
+        st.error("Failed to load the model. Please check the model file and try again.")
+        st.stop()
     
     # Sidebar for input parameters
     st.sidebar.markdown("## 📊 Input Parameters")
@@ -94,9 +105,10 @@ def main():
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            # Get recommendations
+            # Get recommendations with error handling
             try:
-                recommendations = model.predict_crops(N=N, P=P, K=K, pH=pH, rainfall=rainfall, temperature=temperature)
+                with st.spinner("Analyzing soil and climate conditions..."):
+                    recommendations = model.predict_crops(N=N, P=P, K=K, pH=pH, rainfall=rainfall, temperature=temperature)
                 
                 # Display recommendations
                 st.markdown("### 🎯 Top 3 Crop Recommendations")
@@ -138,7 +150,8 @@ def main():
                         st.markdown("---")
                 
             except Exception as e:
-                st.error(f"Error getting recommendations: {e}")
+                st.error(f"❌ Error getting recommendations: {str(e)}")
+                st.info("Please try adjusting the input parameters.")
         
         with col2:
             # Display input parameters summary
@@ -154,47 +167,51 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
-            # Create visualizations
-            st.markdown("### 📈 Nutrient Balance")
-            
-            # NPK ratio chart
-            npk_ratio = N / (P + K) if (P + K) > 0 else 0
-            total_nutrients = N + P + K
-            
-            # Create a gauge chart for NPK ratio
-            fig_gauge = go.Figure(go.Indicator(
-                mode = "gauge+number+delta",
-                value = npk_ratio,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "NPK Ratio"},
-                delta = {'reference': 1.0},
-                gauge = {
-                    'axis': {'range': [None, 3]},
-                    'bar': {'color': "darkgreen"},
-                    'steps': [
-                        {'range': [0, 0.5], 'color': "lightgray"},
-                        {'range': [0.5, 1.5], 'color': "lightgreen"},
-                        {'range': [1.5, 3], 'color': "green"}
-                    ],
-                    'threshold': {
-                        'line': {'color': "red", 'width': 4},
-                        'thickness': 0.75,
-                        'value': 1.5
+            # Create visualizations with error handling
+            try:
+                st.markdown("### 📈 Nutrient Balance")
+                
+                # NPK ratio chart
+                npk_ratio = N / (P + K) if (P + K) > 0 else 0
+                total_nutrients = N + P + K
+                
+                # Create a gauge chart for NPK ratio
+                fig_gauge = go.Figure(go.Indicator(
+                    mode = "gauge+number+delta",
+                    value = npk_ratio,
+                    domain = {'x': [0, 1], 'y': [0, 1]},
+                    title = {'text': "NPK Ratio"},
+                    delta = {'reference': 1.0},
+                    gauge = {
+                        'axis': {'range': [None, 3]},
+                        'bar': {'color': "darkgreen"},
+                        'steps': [
+                            {'range': [0, 0.5], 'color': "lightgray"},
+                            {'range': [0.5, 1.5], 'color': "lightgreen"},
+                            {'range': [1.5, 3], 'color': "green"}
+                        ],
+                        'threshold': {
+                            'line': {'color': "red", 'width': 4},
+                            'thickness': 0.75,
+                            'value': 1.5
+                        }
                     }
-                }
-            ))
-            fig_gauge.update_layout(height=300)
-            st.plotly_chart(fig_gauge, use_container_width=True)
-            
-            # Nutrient composition pie chart
-            fig_pie = px.pie(
-                values=[N, P, K],
-                names=['Nitrogen', 'Phosphorus', 'Potassium'],
-                title="Nutrient Composition",
-                color_discrete_sequence=['#2E8B57', '#3CB371', '#90EE90']
-            )
-            fig_pie.update_layout(height=300)
-            st.plotly_chart(fig_pie, use_container_width=True)
+                ))
+                fig_gauge.update_layout(height=300)
+                st.plotly_chart(fig_gauge, use_container_width=True)
+                
+                # Nutrient composition pie chart
+                fig_pie = px.pie(
+                    values=[N, P, K],
+                    names=['Nitrogen', 'Phosphorus', 'Potassium'],
+                    title="Nutrient Composition",
+                    color_discrete_sequence=['#2E8B57', '#3CB371', '#90EE90']
+                )
+                fig_pie.update_layout(height=300)
+                st.plotly_chart(fig_pie, use_container_width=True)
+                
+            except Exception as e:
+                st.warning(f"Could not generate charts: {str(e)}")
     
     # Information section
     st.markdown("---")
