@@ -59,11 +59,9 @@ def load_model():
         
         model = CropRecommendationModel()
         model.load_model(model_path)
-        st.success("✅ Model loaded successfully!")
         return model
     except Exception as e:
-        st.error(f"❌ Error loading model: {str(e)}")
-        st.info("Please ensure the model file exists and is not corrupted.")
+        st.error(f"Error loading model: {str(e)}")
         return None
 
 def main():
@@ -150,7 +148,7 @@ def main():
                         st.markdown("---")
                 
             except Exception as e:
-                st.error(f"❌ Error getting recommendations: {str(e)}")
+                st.error(f"Error getting recommendations: {str(e)}")
                 st.info("Please try adjusting the input parameters.")
         
         with col2:
